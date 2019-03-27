@@ -1,6 +1,8 @@
 package com.kq.migration.jdbc.oracle
 
+import com.kq.migration.file.SaveToFile
 import com.kq.migration.jdbc.config.DatabaseConfig
+import com.kq.migration.vo.Capacity
 
 import java.util.UUID;
 
@@ -12,39 +14,75 @@ import java.util.UUID;
  */
 class SaleOrderInit {
 
+    /** 10相当于1000条  1等于100 */
+    public static final def iterSize = 10;
+
     static void insert(def size) {
 
         def sql = DatabaseConfig.getOracleInstance()
 
+        def capacity = new Capacity()
+
         (1..size).each{
 //            println it
 
-//            println "---------开始执行第${it}条-----------"
+            println "---------开始执行第${it}条-----------"
 
             def uuid = UUID.randomUUID().toString().replace("-","");
 //            println uuid+"  size="+uuid.length()
 
-            if(it==1)readDataBaseSize(sql,size,"s_sale_order",true);
+            print("---------------------------${it}")
+
+            if(it==1){
+                capacity.startSaleOrder = readDataBaseSize(sql,size,"s_sale_order",true)
+                println("index=${it} capacity.startSaleOrder=${capacity.startSaleOrder}")
+            };
             //插入订单表
             insertSaleOrder(sql,uuid);
-            if(it==size)readDataBaseSize(sql,size,"s_sale_order",false);
+            if(it==size){
+                capacity.endSaleOrder = readDataBaseSize(sql,size,"s_sale_order",false)
+                println("index=${it} capacity.endSaleOrder=${capacity.endSaleOrder}")
+            };
 
-            if(it==1)readDataBaseSize(sql,size,"s_sale_order_detail",true);
+            if(it==1){
+                capacity.startSaleOrderDetail = readDataBaseSize(sql,size,"s_sale_order_detail",true)
+                println("index=${it} capacity.startSaleOrderDetail=${capacity.startSaleOrderDetail}")
+            };
             //插入订单表
             insertSaleOrderDetail(sql,uuid);
-            if(it==size)readDataBaseSize(sql,size,"s_sale_order_detail",false);
+            if(it==size){
+                capacity.endSaleOrderDetail = readDataBaseSize(sql,size,"s_sale_order_detail",false)
+                println("index=${it} capacity.endSaleOrderDetail=${capacity.endSaleOrderDetail}")
+            };
 
 
-            if(it==1)readDataBaseSize(sql,size,"S_PRODUCT_VOTE",true);
+            if(it==1){
+                capacity.startProductVote = readDataBaseSize(sql,size,"S_PRODUCT_VOTE",true)
+                println("index=${it} capacity.startProductVote=${capacity.startProductVote}")
+            };
             //插入评价
             insertProductVote(sql,uuid);
-            if(it==size)readDataBaseSize(sql,size,"S_PRODUCT_VOTE",false);
+            if(it==size){
+                capacity.endProductVote = readDataBaseSize(sql,size,"S_PRODUCT_VOTE",false)
+                println("index=${it} capacity.endProductVote=${capacity.endProductVote}")
+            };
 
 
-            if(it==1)readDataBaseSize(sql,size,"S_SHOPPING_CART",true);
+            if(it==1){
+                capacity.startShoppingCart = readDataBaseSize(sql,size,"S_SHOPPING_CART",true)
+                println("index=${it} capacity.startShoppingCart=${capacity.startShoppingCart}")
+            };
             //购物车
             insertShoppingCard(sql,uuid);
-            if(it==size)readDataBaseSize(sql,size,"S_SHOPPING_CART",false);
+            if(it==size){
+                capacity.endShoppingCart = readDataBaseSize(sql,size,"S_SHOPPING_CART",false)
+                println("index=${it} capacity.endShoppingCart=${capacity.endShoppingCart}")
+            };
+
+            //保存到文件
+            if(it==size){
+                SaveToFile.saveToFile(capacity.toString())
+            }
 
         }
 
@@ -52,7 +90,7 @@ class SaleOrderInit {
 
     static void main(String[] args) {
 
-        (1..10).each{
+        (1..iterSize).each{
             def newSize = it * 100;
             insert(newSize)
 //            println "newSize=${newSize}"
@@ -121,9 +159,9 @@ class SaleOrderInit {
         }
     }
 
-    static void readDataBaseSize(def sql,def size,def tablename,def isStart){
+    static def readDataBaseSize(def sql,def size,def tablename,def isStart){
 
-        def str = "select sum(bytes)/1024 as capacity from user_segments  where segment_name=upper('${tablename}')" ;
+        def str = "select nvl(sum(bytes)/1024,0) as capacity from user_segments  where segment_name=upper('${tablename}')" ;
 
         def dbCapacity = sql.firstRow(str)
 
@@ -133,6 +171,9 @@ class SaleOrderInit {
             println "-end- number=${size} ${tablename} capacity= ${dbCapacity}"
         }
 
+        println "dbCapacity.capacity=${dbCapacity.capacity}"
+
+        return dbCapacity.capacity
 
     }
 

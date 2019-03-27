@@ -1,5 +1,7 @@
 package com.kq.migration.jdbc.demo
 
+import com.kq.migration.jdbc.config.DatabaseConfig
+
 /**
  * TransactionDemo
  *

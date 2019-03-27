@@ -1,5 +1,6 @@
 package com.kq.migration.jdbc.demo
 
+import com.kq.migration.jdbc.config.DatabaseConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
